@@ -93,7 +93,7 @@ def build_transforms(image_size: int = 224, *, augment: bool = False):
     square input and normalise with ImageNet statistics, which is what both
     pretrained backbones expect. The optional training augmentation uses
     flips and small rotations because a leaf's identity does not depend on
-    its orientation on the scanner.
+    its orientation in the frame.
     """
     normalise = [transforms.ToTensor(), transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD)]
     if not augment:
