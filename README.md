@@ -16,9 +16,12 @@ vector and classified by one linear layer; both backbones are fine-tuned end to 
 | Best handcrafted pipeline (MTD + LBP-HF + SVM) | 96.88% | 96.82% |
 | ResNet-101 alone | 94.70% | 94.42% |
 
-Mean (± standard deviation) over **20 random 70/30 train/test partitions** of the CVIP100 leaf
-dataset, training a fresh model on each. The full comparison is in
-[`results/reported_results.json`](results/reported_results.json).
+Mean (± standard deviation) over **20 random, unstratified 70/30 train/test partitions**
+(`random_state` 0–19) of the CVIP100 leaf dataset, training a fresh model on each. These are
+**historical numbers reported from the original campaign**. They are not reproduced by this
+repository's CI, and no per-split logs, split indices or weights were kept (see
+[Reported versus reproducible](#reported-versus-reproducible)). The full comparison and protocol
+are in [`results/reported_results.json`](results/reported_results.json).
 
 ## Architecture
 
@@ -85,12 +88,12 @@ data/leaves/
     └── …
 ```
 
-Reproduce the hybrid result and its ablations:
+Rerun the hybrid and its ablations under the **reported protocol** (unstratified splits):
 
 ```bash
-leafnet run --data-dir data/leaves --arch hybrid    --output-dir runs/hybrid    --amp
-leafnet run --data-dir data/leaves --arch vit       --output-dir runs/vit       --amp
-leafnet run --data-dir data/leaves --arch resnet101 --output-dir runs/resnet101 --amp
+leafnet run --data-dir data/leaves --arch hybrid    --no-stratify --output-dir runs/hybrid    --amp
+leafnet run --data-dir data/leaves --arch vit       --no-stratify --output-dir runs/vit       --amp
+leafnet run --data-dir data/leaves --arch resnet101 --no-stratify --output-dir runs/resnet101 --amp
 
 # the 60-epoch study, evaluating every 10 epochs in the same run
 leafnet run --data-dir data/leaves --epochs 60 --eval-epochs 10 20 30 40 50 60 --output-dir runs/epochs
@@ -100,9 +103,13 @@ leafnet summarize runs/hybrid/results.json
 
 ```text
 hybrid over 20 splits
-  top1         98.46 ± 0.71  (range …)
-  f1_weighted  98.40 ± 0.73  (range …)
+  top1         <mean> ± <std>  (range …)
+  f1_weighted  <mean> ± <std>  (range …)
 ```
+
+Without `--no-stratify`, runs use the stratified splits this repository recommends (next
+section). Those numbers are a different protocol and should not be compared line by line with the
+table above.
 
 Each run writes `results.json` after every split: per-split metrics, the loss curve, any intermediate
 evaluations, timing, the exact configuration and the software environment. If a job is interrupted,
@@ -134,6 +141,20 @@ leafnet predict --checkpoint runs/hybrid/model_split00.pt --input photos/ --top-
   without replacement. It is repeated random sub-sampling (Monte Carlo cross-validation) and the
   code is named accordingly.
 
+## Reported versus reproducible
+
+| | Reported result (table above) | What this repository reproduces |
+|---|---|---|
+| Source | the original 20-split campaign on one RTX 3060 laptop GPU | `leafnet run` on your copy of CVIP100 |
+| Splits | unstratified, `random_state` 0–19 | stratified by default; `--no-stratify` restores the reported procedure |
+| Kept artifacts | aggregate means and standard deviations, three figures | full `results.json` per run: per-split metrics, loss curve, configuration, environment |
+| In CI? | **no**: needs the dataset and a GPU | the code path is: `tests/` run a two-split campaign end to end on synthetic images with stand-in backbones |
+
+Split indices will match the original only if your dataset copy has the same class folders and
+files. So a rerun under `--no-stratify` reproduces the protocol, not necessarily the exact
+partitions. `tests/test_reported_protocol.py` keeps the README, the results file and the CLI
+defaults consistent with this table.
+
 ## Evaluation caveats
 
 - The 20 test sets overlap heavily and share most of their training data, so the ± values describe
@@ -157,7 +178,7 @@ src/leafnet/
 ├── experiment.py  resumable 20-split campaign → results.json
 ├── predict.py     top-k inference from a checkpoint
 └── cli.py         `leafnet run | summarize | predict`
-tests/             26 tests: data, model shapes, metrics, end-to-end campaign, resume
+tests/             29 tests: data, model shapes, metrics, end-to-end campaign, resume, reported protocol
 results/           reported numbers and protocol
 docs/figures/      plots from the reported campaign
 ```

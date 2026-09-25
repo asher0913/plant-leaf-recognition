@@ -1,35 +1,88 @@
 {
-  "dataset": {
-    "name": "CVIP100 leaf dataset",
-    "classes": 100,
-    "input": "224x224 RGB, ImageNet normalisation, no augmentation"
+ "dataset": {
+  "name": "CVIP100 leaf dataset",
+  "classes": 100,
+  "input": "224x224 RGB, ImageNet normalisation, no augmentation"
+ },
+ "protocol": {
+  "status": "historical: reported from the original campaign; not reproduced by this repository's CI",
+  "evaluation": "20 random 70/30 train/test partitions (random_state 0-19); a fresh model is trained on each",
+  "splits": {
+   "stratified": false,
+   "test_size": 0.3,
+   "random_state": "0-19"
   },
-  "protocol": {
-    "evaluation": "20 random 70/30 train/test partitions (random_state 0-19); a fresh model is trained on each",
-    "optimiser": "Adam, lr 1e-4, batch 32, cross-entropy, all parameters fine-tuned",
-    "epochs": 10,
-    "hardware": "single NVIDIA RTX 3060 laptop GPU",
-    "note": "The original campaign used unstratified splits; this repository stratifies by default and `--no-stratify` restores the original behaviour."
+  "optimiser": "Adam, lr 1e-4, batch 32, cross-entropy, all parameters fine-tuned",
+  "epochs": 10,
+  "hardware": "single NVIDIA RTX 3060 laptop GPU",
+  "artifacts_kept": "aggregate numbers and the three figures only; no per-split logs, split indices or weights",
+  "same_protocol_with_this_code": "leafnet run --data-dir <CVIP100> --arch hybrid --no-stratify --seed 0 --test-size 0.3 --epochs 10",
+  "note": "This repository stratifies splits by default. --no-stratify restores the protocol above; split indices will match only if the class folders and file order match the original dataset copy."
+ },
+ "hybrid_resnet101_vit_b16": {
+  "top1_mean": 0.9846,
+  "top1_std": 0.0071,
+  "f1_weighted_mean": 0.984,
+  "f1_weighted_std": 0.0073
+ },
+ "comparison_mean_over_20_splits": [
+  {
+   "method": "MTD + LBP-HF + kNN",
+   "family": "handcrafted",
+   "top1": 0.9095,
+   "f1_weighted": 0.9094
   },
-  "hybrid_resnet101_vit_b16": {
-    "top1_mean": 0.9846,
-    "top1_std": 0.0071,
-    "f1_weighted_mean": 0.9840,
-    "f1_weighted_std": 0.0073
+  {
+   "method": "Improved MTD",
+   "family": "handcrafted",
+   "top1": 0.964,
+   "f1_weighted": 0.9632
   },
-  "comparison_mean_over_20_splits": [
-    {"method": "MTD + LBP-HF + kNN", "family": "handcrafted", "top1": 0.9095, "f1_weighted": 0.9094},
-    {"method": "Improved MTD", "family": "handcrafted", "top1": 0.9640, "f1_weighted": 0.9632},
-    {"method": "MTD + LBP-HF, tuned", "family": "handcrafted", "top1": 0.9658, "f1_weighted": 0.9652},
-    {"method": "MTD + GLCM + SVM", "family": "handcrafted", "top1": 0.9685, "f1_weighted": 0.9678},
-    {"method": "MTD + LBP-HF + SVM", "family": "handcrafted", "top1": 0.9688, "f1_weighted": 0.9682},
-    {"method": "ResNet-101, fine-tuned", "family": "deep", "top1": 0.9470, "f1_weighted": 0.9442},
-    {"method": "ViT-B/16, fine-tuned", "family": "deep", "top1": 0.9769, "f1_weighted": 0.9760},
-    {"method": "ViT-B/16 knowledge-distilled student", "family": "deep", "top1": 0.9803, "f1_weighted": 0.9799},
-    {"method": "ResNet-101 + ViT-B/16 hybrid", "family": "deep", "top1": 0.9846, "f1_weighted": 0.9840}
-  ],
-  "epoch_study": {
-    "description": "Hybrid model trained for 60 epochs with test evaluations every 10 epochs, averaged over the 20 splits",
-    "finding": "Training loss fell from 3.15 to 0.30 within two epochs and was near zero after six; mean accuracy at epoch 60 (98.44%) was no better than at epoch 10, so the final protocol stops at 10 epochs."
+  {
+   "method": "MTD + LBP-HF, tuned",
+   "family": "handcrafted",
+   "top1": 0.9658,
+   "f1_weighted": 0.9652
+  },
+  {
+   "method": "MTD + GLCM + SVM",
+   "family": "handcrafted",
+   "top1": 0.9685,
+   "f1_weighted": 0.9678
+  },
+  {
+   "method": "MTD + LBP-HF + SVM",
+   "family": "handcrafted",
+   "top1": 0.9688,
+   "f1_weighted": 0.9682
+  },
+  {
+   "method": "ResNet-101, fine-tuned",
+   "family": "deep",
+   "top1": 0.947,
+   "f1_weighted": 0.9442
+  },
+  {
+   "method": "ViT-B/16, fine-tuned",
+   "family": "deep",
+   "top1": 0.9769,
+   "f1_weighted": 0.976
+  },
+  {
+   "method": "ViT-B/16 knowledge-distilled student",
+   "family": "deep",
+   "top1": 0.9803,
+   "f1_weighted": 0.9799
+  },
+  {
+   "method": "ResNet-101 + ViT-B/16 hybrid",
+   "family": "deep",
+   "top1": 0.9846,
+   "f1_weighted": 0.984
   }
+ ],
+ "epoch_study": {
+  "description": "Hybrid model trained for 60 epochs with test evaluations every 10 epochs, averaged over the 20 splits",
+  "finding": "Training loss fell from 3.15 to 0.30 within two epochs and was near zero after six; mean accuracy at epoch 60 (98.44%) was no better than at epoch 10, so the final protocol stops at 10 epochs."
+ }
 }
